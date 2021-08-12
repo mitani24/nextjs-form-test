@@ -9,16 +9,24 @@ import {
   Heading,
   Input,
 } from "@chakra-ui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-type Inputs = {
-  emailAddress: string;
-  password: string;
-};
+const schema = z.object({
+  emailAddress: z
+    .string()
+    .nonempty({ message: "メールアドレスは入力必須だよ" })
+    .min(8, { message: "8文字以上入力してね" })
+    .email({ message: "フォーマットが正しくないよ" }),
+  password: z
+    .string()
+    .nonempty({ message: "パスワードは入力必須だよ" })
+    .min(8, { message: "8文字以上入力してね" }),
+});
 
-const emailPattern =
-  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+type Inputs = z.infer<typeof schema>;
 
-export default function LiginForm({ ...delegated }: FlexProps) {
+export default function LiginFormZod({ ...delegated }: FlexProps) {
   const {
     register,
     handleSubmit,
@@ -26,6 +34,7 @@ export default function LiginForm({ ...delegated }: FlexProps) {
   } = useForm<Inputs>({
     mode: "onChange",
     criteriaMode: "all",
+    resolver: zodResolver(schema),
   });
 
   const onSubmit: SubmitHandler<Inputs> = (data, event) => {
@@ -36,33 +45,15 @@ export default function LiginForm({ ...delegated }: FlexProps) {
   return (
     <Flex direction="column" p={12} rounded={6} {...delegated}>
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <Heading mb={6}>Log in</Heading>
+        <Heading mb={6}>Log in (zod)</Heading>
         <FormControl isRequired isInvalid={!!errors.emailAddress} mb={3}>
           <FormLabel>Email address</FormLabel>
-          <Input
-            variant="filled"
-            type="email"
-            {...register("emailAddress", {
-              required: "メールアドレスは入力必須だよ",
-              minLength: { value: 8, message: "8文字以上入力してね" },
-              pattern: {
-                value: emailPattern,
-                message: "フォーマットが正しくないよ",
-              },
-            })}
-          />
+          <Input variant="filled" type="email" {...register("emailAddress")} />
           <FormErrorMessage>{errors.emailAddress?.message}</FormErrorMessage>
         </FormControl>
         <FormControl isRequired isInvalid={!!errors.password} mb={6}>
           <FormLabel>Password</FormLabel>
-          <Input
-            variant="filled"
-            type="password"
-            {...register("password", {
-              required: "メールアドレスは入力必須だよ",
-              minLength: { value: 8, message: "8文字以上入力してね" },
-            })}
-          />
+          <Input variant="filled" type="password" {...register("password")} />
           <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
         </FormControl>
         <Button colorScheme="teal" type="submit" disabled={!isValid}>
